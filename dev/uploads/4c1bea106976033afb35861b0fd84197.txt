@@ -1,0 +1,42 @@
+<?
+//echo getcwd();
+session_start();	
+ini_set('default_charset','UTF-8');
+header('Content-Type: text/html; charset=utf-8'); 
+
+include_once(ADMIN."gamaConfig/gamaconfig.php"); //incluir Gamaconfig
+
+// fornecimento de paginas estaticas
+include_once("default/control/default_control.php");
+$default_control = new default_control();
+
+/* if 'l'ocation is defined, */
+if (isset($_GET["l"]) && ($_GET["l"] != ""))
+{
+	if (file_exists(ROOT.$_GET["l"]."/control/".$_GET["l"]."_control.php") && !method_exists($default_control, $_GET["l"]))
+	{
+		include_once(ROOT.$_GET["l"]."/control/".$_GET["l"]."_control.php"); 
+		$classe = $_GET["l"]."_control";
+		$pagina = new $classe; // instancia o control de 'l'
+	}
+	else
+	{
+		// inclusao da pagina estatica
+		//if (method_exists("default_control", $_GET["l"]))
+		if (method_exists($default_control, $_GET["l"]))
+		{
+			include_once(ROOT."templateHead.php");
+			//default_control::$_GET["l"]();
+			$default_control->$_GET["l"]();
+			include_once(ROOT."templateRodape.php");
+		}
+		else
+			echo "<h1>sorry! bad request.<br>'".$_GET["l"]."' doesnt exists</h1>";
+	}
+}
+else // if not, call default behavior 
+{
+	$pagina = new GamaControl();
+}
+
+?>

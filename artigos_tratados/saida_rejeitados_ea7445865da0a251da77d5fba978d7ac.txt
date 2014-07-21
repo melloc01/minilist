@@ -1,0 +1,32 @@
+	</script> 
+</head> 
+					</td> 
+				</tr> 
+			</tbody> 
+	<div > 
+		</p>  
+	</div> 
+			</ul> 
+		</p>  
+	</div> 
+	</div> 
+	</form> 
+		<?php 
+			<?php  
+				$artigo_tratado = str_replace(',', '', $artigo_tratado) ; 
+				$artigo_tratado = str_replace(')', '', $artigo_tratado) ; 
+				$artigo_tratado = str_replace('Â', '', $artigo_tratado) ; 
+				$artigo_tratado = str_replace('?', '', $artigo_tratado) ; 
+				$artigo_tratado = str_replace(':', '', $artigo_tratado) ; 
+				$artigo_tratado = str_replace('(', '', $artigo_tratado) ; 
+					} else { 
+				<?php   
+					$nome = md5(date('h:i:s')).'.txt'; 
+					</h2> 
+					</h1> 
+					</p> 
+					<?php 
+				</div> 
+				<?php 
+	</body> 
+	</html>  

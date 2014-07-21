@@ -1,0 +1,74 @@
+<br/>
+<?    
+$root = "";
+    //include_once("gamaConfig/inicia.php");
+
+?>
+<link href="<?=ROOT?>usuario/css/usuario.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" language="javascript" src="<?=ROOT;?>usuario/js/usuario.js"></script> 
+<?      
+include_once("usuario/model/usuario.class.php");
+
+$content = new Usuario(40);
+
+include_once("usuario/control/functions.php");
+
+$imagemTitulo = $root."./img/usuarios.png";
+$titulo = "Usu&aacute;rios";
+
+?>    
+<div style="display: table; width: 100%;">
+    <? include($root."GamaCore/view/titulo.php");?>
+    <?
+    if(acesso_ferramenta($_SESSION["idUser"], "niv")){   
+        ?>
+        <div style="float: right; ">
+            <input type="button" class="btn btn-primary" value="Gerenciar N&iacute;veis" onclick="window.location='?l=nivel'"/> 
+            <input type="button" class="btn btn-flat" value="Novo Usu&aacute;rio" onclick="window.location='?l=usuario&sl=novo'"/>
+        </div>        
+    </div>
+    <? 
+}    
+    //include_once($root."control/usuario/functions.php");
+include(ROOT."paginacao/model/paginacao.class.php");
+
+$usuarios = $content->getListaArray();
+
+$url = $root."?l=usuario";
+$sql = "select count(*) as quantidade from usuario";
+
+$paginacao = new Paginacao($sql, $url, 40, 10);
+
+echo "<table align='right'><tr><td>".$paginacao->getPaginas()."</td></tr></div>";
+
+include_once(GamaCore."/view/mensagemOk.php");
+include_once(GamaCore."view/mensagemErro.php");
+?>
+
+<div class="row">
+    <div class="separador_form"></div>
+</div>
+<table class="tabelaLista">
+    <?   
+    if($usuarios){
+        foreach($usuarios as $usuario){
+            ?>
+            
+            <tr class="linhaLista">
+                <td class="tituloLista" align="left">
+                    <?=$usuario["nome"];?><? if($usuario["cargo"]!="") echo " - ".$usuario["cargo"]." ";?><span class="subtexto"> (N&iacute;vel: <? if($usuario["nivel"]!="") echo $usuario["nivel"]; else echo "SEM N&Iacute;VEL";?>)</span>
+                </td>
+                <td class="iconeLista" align="center" title="Ver/Editar dados" onclick="window.location='?l=usuario&sl=editar&cod=<?=$usuario["id"]?>'">
+                    <img src="GamaCore/img/editar.png" />
+                </td>
+                <td class="iconeLista" align="center" title="Excluir" onclick="removeUsuario(<?=$usuario["id"]?>)">
+                    <form method="post" name="formRem<?=$usuario["id"]?>" action="?l=usuario"><input type="hidden" name="rem" value="<?=$usuario["id"]?>"/></form>
+                    <img src="GamaCore/img/remover.png" />
+                </td>
+            </tr>
+            <?        
+        }
+    }
+    else echo "<table align='center'><tr><td>Nenhum registro econtrado.</td></tr></table>";
+    ?>
+</table>                      

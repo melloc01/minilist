@@ -1,0 +1,586 @@
+<?
+
+/*
+	Atualização 7/11: Parametro 'ajax' no construtor que inibe o fornecimento de páginas se ajax = true
+*/
+class GamaControl
+{
+	protected $tabela; // define a tabela a ser visualizada
+	protected $ferramenta; // define a ferramenta a ser utilizada
+	public $model = array(); // models utilizados
+	private $default_control; // control p/ paginas estaticas
+	
+	// vetor de utils utilizado // 17/12/2013
+	public $utils = array("GamaCrypt"); 
+	
+	
+	function __construct($ferramenta = "", $ajax = false)
+	{				
+		
+		$this->tabela = get_class($this);
+		$this->ferramenta = $ferramenta;
+		$this->createModels(); // instancia o(s) model(s) utilizado(s) pelo controlador
+		$this->createUtils(); // instancia o(s) util(s) utilizado(s) pelo controlador
+			
+		if (!$ajax)
+		{
+			// se estiver no admin e nao estiver autenticado
+			if (preg_match("/admin/i", $_SERVER["REQUEST_URI"]) && !isset($_SESSION["idUser"]))
+			{			
+				$_GET["l"] = "login";
+				$this->excessao();
+			}	
+			else if (get_class($this) == "GamaControl")
+			{
+				$this->redirect(true); // true ~> default = true
+			}
+			else
+			{
+				$this->execute();
+			}
+		}
+	}
+	
+	// metodo de criacao GENERICO que sera INVOCADO pelo createUtils e createModels
+	protected function create($path, $object, $array) { }
+	///////////////////////////////////////////////////////////////////////////////////
+	
+	//////////////// REFATORAR -this->create
+	protected function createUtils()
+	{
+		if (is_array($this->utils))
+		{
+			if (count($this->utils) > 0)
+				foreach($this->utils as $util)
+				{
+					$this->utils[$util] = $this->factoryUtils($util); // instancia o model e armazena no vetor models
+				}					
+		}
+		else
+		{
+			echo "erro de configuracao no controlador ".$this->tabela.": verificar atributo 'model'";
+		}		
+	}
+	//////////////// REFATORAR -this->create
+	protected function createModels()
+	{
+		if (is_array($this->model))
+		{
+			if (count($this->model) > 0)
+				foreach($this->model as $model)
+				{
+					$this->model[$model] = $this->factory($model); // instancia o model e armazena no vetor models
+				}					
+		}
+		else
+		{
+			echo "erro de configuracao no controlador ".$this->tabela.": verificar atributo 'model'";
+		}
+	}
+	
+	protected function excessao()
+	{
+		include_once(templateHead);
+		
+		if (isset($_GET["sl"]) && ($_GET["l"] != "login"))
+				include($_GET["l"]."/view/".$_GET["sl"].".php");
+		else if ($_GET["l"] == "login")
+		{
+			if ((isset($_GET["sl"]) && ($_GET["sl"] == "esqueci")))
+				include("login/view/esqueci.php");
+			else
+				include("login/view/login.php");
+		}
+		else
+			include($_GET["l"]."/view/lista.php");
+					
+		include_once(templateRodape);
+	}
+	
+	function setFerramenta($ferramenta) { $this->ferramenta = $ferramenta; }
+	
+	protected function execute()
+	{		
+		$tamanho = strlen($this->tabela);
+		$this->tabela = substr(get_class($this),0,$tamanho-8); // Tabela_control ~> Tabela
+					
+		$this->tabela = strtolower(substr($this->tabela,0,1)) . substr($this->tabela,1);
+		
+		if (preg_match("/admin/i", $_SERVER["REQUEST_URI"]))
+			$this->verifica($this->ferramenta); // verifica acesso a ferramenta (SOMENTE NO ADMIN)
+			
+		$this->functions(); // chama functions
+		$this->redirect(); // chama redireciona as paginas -> view
+	}
+	/* verifica acesso às ferramentas */
+	protected function verifica($ferramenta = "")
+	{
+		if(isset($_SESSION["idUser"]))
+			$verificacao_acesso = $this->acesso_ferramenta($_SESSION["idUser"], $ferramenta);
+		//else
+			//$verificacao_acesso = true;
+			
+		if (!$verificacao_acesso)
+		{
+			$_SESSION["mens"] = "Voc&ecirc; n&atilde;o tem permiss&atilde;o para acessar esta ferramenta!";
+		
+			//Salva no historico
+			/*
+			include_once($this->root."model/historico.class.php");
+			$log = new Historico();
+			$log->insert("O usu&aacute;rio ".$_SESSION["nameUser"]." tentou acessar uma ferramenta sem permiss&atilde;o para ele! (c&oacute;digo: ".$ferramenta.")");
+			*/
+			//retorna pagina
+			die("<script>window.location='./';</script>");
+			
+		}
+	}
+	protected function acesso_ferramenta($idUser, $ferramenta)
+	{
+		// gambia
+		include_once(ADMIN."GamaCore/db_connection_class/".DB_CONNECTION_CLASS_FILE); // inclui a interface  a ser utilizada
+		$className = DB_CONNECTION_CLASS;
+		$this->gamaDB = new $className;
+		$credential = GamaControl::getCredential();
+		$this->gamaDB->connect(DB_HOST, $credential['dbusername'] , $credential['dbuserpassword'], DB_SCHEMA_NAME);
+		
+		if ($ferramenta != "")
+		{
+			///////////////////////////////////////////// view no banco
+			$sql = "select * from 
+						usuario u, 
+						nivel n, 
+						ferramenta f, 
+						acesso a 
+						where
+							a.fkNivel = n.id and 
+							a.fkFerramenta = f.codigo and
+							u.fkNivel = n.id and
+							u.id = {$idUser} and
+							f.codigo = '{$ferramenta}'
+					";
+			///////////////////////////////////////////// view no banco
+			
+			$query = $this->gamaDB->query($sql);
+			
+			if ($this->gamaDB->num_rows($query) == 0)
+				return false;
+			else 
+				return true;
+				
+		// gambia
+		}
+		else
+		{
+			if ($idUser > 0)
+			{
+				return true;
+			}
+			else
+				return false;
+		}
+	}
+	/* redireciona a pagina com l (location) e sl (sublocation) */
+	protected function redirect($default=false)
+	{
+		// gambi
+		$projeto = "/brucke_testes/";
+		//if (preg_match("/admin/i", $_SERVER["REQUEST_URI"]))
+		//	$projeto .="admin/";
+		//echo "<base href='http://{$_SERVER["HTTP_HOST"]}{$projeto}'/>"; 
+			
+		if (!preg_match("/admin/i", $_SERVER["REQUEST_URI"])) // so printa base se estiver no site
+			echo "<base href='http://{$_SERVER["HTTP_HOST"]}{$projeto}'/>"; 
+		// fim gambi
+		
+		include_once(ROOT."templateHead.php");
+		
+		if ($default)
+		{
+			$this->default_control = new default_control();
+			$this->default_control->home();
+		}
+			//default_control::home();
+			//include_once(ROOT."default.php");
+		else
+			$this->go();				
+		
+		include_once(ROOT."templateRodape.php");			
+	}
+	protected function go()
+	{
+		if (isset($_GET["sl"]))
+		{
+			$sl = $_GET["sl"];
+			
+			if (method_exists($this, $sl))
+				$this->$sl();
+			else
+				echo "Pagina nao encontrada";
+		}
+		else
+		{
+			if (method_exists($this, "lista"))
+				$this->lista();
+			else
+				$this->home();
+		}
+	}
+	
+	/* 
+		Método Factory parametrizado
+		Permite instanciar classes em tempo de execucao
+	*/
+	
+	// factory para UTILS
+	protected function factoryUtils($type)
+	{
+		if (file_exists(ADMIN.'GamaCore/utils/' . $type . '.php'))
+		{
+			include_once(ADMIN.'GamaCore/utils/' . $type . '.php');
+			return new $type;
+		}
+		else
+		{	
+			throw new exception("Erro: Utils '{$type}.php' nao existe em admin\GamaCore\utils\ ");
+		}
+	}
+	
+	//factory para MODEL
+	protected function factory($type)
+	{
+		
+		$root = "";
+		$tabela = explode("_", $this->tabela);
+		$tabela = $tabela[0];
+		// se o model possuir pasta propria
+		if (file_exists(ADMIN.$type.'/model/' . $type . '.class.php'))
+		{
+			include_once(ADMIN.$type.'/model/' . $type . '.class.php');
+			$classname = $type . "_model"; // Nome da classe em 'model': <nome_da_tabela>_model
+			return new $classname($type);
+		} 
+		// se o model estiver na pasta /model/ desta tabela
+		else if (file_exists(ADMIN.$tabela.'/model/' . $type . '.class.php')) 
+		{
+			include_once(ADMIN.$tabela.'/model/' . $type . '.class.php');
+			
+			$classname = $type . "_model"; // Nome da classe em 'model': <nome_da_tabela>_model
+			return new $classname($type);
+		}
+		else
+		{	
+			throw new exception("Erro: model '{$type}.class.php' nao existe em /{$tabela}/model/ e /{$type}/model/ ");
+		}
+	}
+	
+	protected function functions()
+	{
+		
+		if ($_SERVER["REQUEST_METHOD"] == "POST")
+		{
+			// instancia o model correspondente
+			$dados_tabela = $this->factory($this->tabela);
+			
+			/////////// VERIFICA SE HA SEPARADOR
+			/////// <operacao>:<tabela>
+			/////// exemplo:
+			/////// cad:noticia
+			/////// edit:noticia
+			
+			$post_keys = array_keys($_POST);
+			
+			if ($_FILES)
+			{				
+				$file_keys = array_keys($_FILES);
+				
+				//$_POST = array_push($post_keys, $file_keys); 
+				foreach($file_keys as $keys=>$value)
+					$_POST[$value] = "";
+				/*
+				*/
+			}
+			
+			//foreach ($post_keys as $keys)
+			/*foreach ($_POST as $keys=>$value)
+			{
+			
+				$operation_table = explode(":", $keys);
+				
+				if (count($operation_table)>1)
+				{
+					if ($operation_table[0] == "cad")
+						$_POST["cad"] = 1;
+					else if ($operation_table[0] == "edit")
+						$_POST["edit"] = $_POST[$keys];
+					else if ($operation_table[0] == "rem")
+						$_POST["rem"] = $_POST[$keys];
+					
+					unset($_POST[$keys]);
+					// caso haja presenca de separador, o model a ser utilizado
+					// sera o informado pelo valor a direita do separador
+					$dados_tabela = $this->factory($operation_table[1]);
+						
+					break;
+				} // fim if
+			}*/ // fim foreach
+			/* recupera os campos que foram usados no form de edit/cad */
+			$campos = array();
+			//$campos = $dados_tabela->getOrder();
+			//print_r($campos);
+			
+		}
+		//decrypt: crypta os parametros de controle (cad, rem, edit) e o id.
+		if(isset($_POST['op'])){
+			$operation = $_POST['op'];
+			$decrypt = $this->utils["GamaCrypt"]->decrypt($operation,$_POST[$operation]);
+			if($decrypt){
+				$_POST[$decrypt['tipo']] = $decrypt['id'];
+				unset($_POST['op']);
+				unset($_POST[$operation]);
+			}
+		}
+		//decrypt
+
+		if(isset($_POST["cad"]))
+		{
+			unset($_POST["cad"]);
+			
+			//if($dados_tabela->insertPost(array_keys($_POST)))
+			//if($dados_tabela->insertPost())
+			if($this->multCRUD($_POST,'cad'))
+			//if($dados_tabela->insertPost($_POST))
+				$_SESSION["ok"] = "Cadastrado com sucesso!";
+			else
+				$_SESSION["mens"] = "Erro ao cadastrar.<br> Tente novamente";
+		}
+		
+		if(isset($_POST["edit"]))
+		{
+			$edit = $_POST["edit"];
+			unset($_POST["edit"]);
+			
+			//if ($dados_tabela->multInsert($edit, array_keys($_POST)))
+			if ($this->multCRUD($_POST,'edit',$edit))
+				$_SESSION["ok"] = "Editado com sucesso!";
+			else
+				$_SESSION["mens"] = "Erro ao editar.<br> Tente novamente";
+		}
+		
+		if(isset($_POST["rem"]))
+		{
+			$rem = $_POST["rem"];
+			unset($_POST["rem"]);
+			
+			if ($dados_tabela->remove($rem))
+			//var_dump($_POST);
+			//if ($this->multCRUD($_POST,'rem',$edit))
+			{
+				$_SESSION["ok"] = "Removido com sucesso!";
+			}
+			else
+			{
+				$_SESSION["mens"] = "Erro ao remover.<br> Tente novamente";
+			}
+		}
+	}
+	//caso seja necessario criar mais credenciais, colocar a logica aqui
+	static function getCredential()
+	{
+		$credential = array();
+		$credential['dbusername']   	= DB_USER_GUEST;
+		$credential['dbuserpassword']	=	 DB_USER_GUEST_PASSWORD;
+
+		if (isset($_SESSION["idUser"]) && ($_SESSION["idUser"] != "") && isset($_SESSION["nameUser"]) && ($_SESSION["nameUser"] != ""))
+		{
+			$credential['dbusername']   	 = 	DB_USER_ADMIN;
+			$credential['dbuserpassword']	 =	DB_USER_ADMIN_PASSWORD;
+		}	
+		return $credential;
+	}
+	
+	//////////////////// multCRUD
+	/*
+		Modo de uso
+		
+		Obs: 
+			As tabela pai não precisam de separador (se houver funcionará do mesmo jeito).
+			As tabelas filhas precisam ter o separador no 'name' do 'input'. 
+			
+			Ex:
+			
+			tabela_pai = { id, nome, idade}
+			
+			tabela_filha = { id, fkTabela_pai, texto }
+			
+			nos inputs...
+			
+				<!-- Atributos da 'tabela_pai' -->
+				<input name='id' type='hidden' />
+				<input name='nome' />
+				<input name='idade' />
+				
+				<!-- Atributos da 'tabela_filha' -->
+				<input name='id--tabela_filha' /> <!-- Aqui, sobrescrever o input e o utiliza-lo como hidden. Campo obrigatório em cadastro ou edição -->
+				<input name='fkTabela_pai--tabela_flha' />
+				<input name='texto--tabela_filha' />
+				
+		Em resumo,
+		
+			1. <atributo>--<tabela> (obrigatório para as tabelas filhas)
+			2. Inputs id das tabelas filhas DECLARADAS COMO HIDDEN (mesmo em telas de cadastro)
+		
+	
+		Em TABELAS DE EDIÇÃO,
+				<Control>::editar()
+				{
+					(...)
+					
+					Ao invés de
+						$dados = $this->model[<tabela>]->getRegistro($_GET["cod"]);
+						
+					Colocar
+						$dados = $this->multCRUD($this->mask, "get", $_GET["cod"], array());
+					
+	*/
+	
+	
+function multCRUD($post, $tipo, $id = "", $registro = ''){
+
+	$i = 0;
+	$auxPost = array();
+	$explode = array();
+	$flag = 0;
+
+	//apos o unset(); e necessario colocar o ponteiro na primeira posicao de vetor
+	reset($post);
+
+	//pega o primeira campo e recupera a primeira tabela a ser inserida
+	$define_tabela = explode("--", key($post));	
+	if(!isset($define_tabela[1])){
+		$tabela_atual = $this->tabela;
+		$flag = 1;
+	}
+	else
+		$tabela_atual = $define_tabela[1];
+
+	//monta o post da tabela_atual
+	foreach($post as $key => $value){
+		$explode = explode("--", $key);
+		$atributo = $explode[0];
+	
+		if(isset($explode[1])){// define se é a tabela pai ou tabela dependente
+			$tabela = $explode[1];
+		}
+		else{
+			$tabela = $this->tabela;
+		}
+
+		//decide se o atributo pertence ate tabela_atual e monta o post a ser executado
+		if($tabela_atual == $tabela || ($tabela_atual == $this->tabela) && (!isset($tabela))){
+			$auxPost[$atributo] = $value;
+			unset($post[$key]);
+		}	
+	}
+
+	// trata o FILES caso sejam arquivos da tabela pai, colocando o separador
+	if($flag == 1){
+		$keys = array_keys($_FILES);
+		foreach($_FILES as $key=>$value){
+			$explode = explode('--',$key);
+			if(!isset($explode[1])){
+				$_FILES[$key.'--'.$tabela_atual] = $_FILES[$key];
+				unset($_FILES[$key]);
+			}	
+		}
+	}
+
+	$return = false;
+	//executa a operacao que foi passada para a funcao
+	if($tipo == 'cad'){
+		$id = $this->model[$tabela_atual]->insertPost($auxPost);
+		$return = $id;
+	}
+	if($tipo == 'edit'){
+		$return = $this->model[$tabela_atual]->updatePost($id, $auxPost);
+	}
+	if($tipo == 'get'){
+		$aux_registro = $this->model[$tabela_atual]->getRegistro($id);
+		if($tabela_atual != $this->tabela){//se existirem dependencias, coloca o separador
+			foreach($aux_registro as $keys=> $value){
+				$aux_registro[$keys.'--'.$tabela_atual] = $aux_registro[$keys];
+				unset($aux_registro[$keys]);
+			}
+		}
+		$registro = array_merge($registro, $aux_registro);
+	}
+
+	reset($post); 
+	//procura pela existencia de tabelas dependentes e chama multCRUD
+	foreach($post as $key => $value){
+		$explode = explode("--", $key);
+		$atributo = $explode[0];
+		if(isset($explode[1]))
+			$tabela = $explode[1];
+		if($atributo == "fk".ucwords($tabela_atual)){
+	$post[$key] = $id; //atualiza o valos da fk
+	if($tipo == 'edit'){
+		$id = $post["id--".$tabela];
+	}
+	if($tipo == 'get'){
+		$aux = $this->model[$tabela]->getListaArray("fk".ucwords($tabela_atual)." =".$id);
+		$id = $aux[0]['id'];
+	}
+		return $this->multCRUD($post, $tipo, $id ,$registro);
+	}
+
+	}
+	if($tipo == 'get' && $post == null ){ 
+		return $registro;
+	}
+	return $return;
+	}
+
+	//////////////////// multCRUD
+	
+	//////////////////////////////////////////////////////////// forms dinamicos
+	
+	///// lista
+	public function lista_hasBotaoNovo() { return true; }
+	public function lista_hasBotaoEditar() { return true; }
+	public function lista_hasBotaoExcluir() { return true; }
+	
+	public function getOnClickBotaoEditar($id) { return str_replace("<id>", $id, $this->lista_OnClickBotaoEditar); }
+	public function getOnClickBotaoExcluir($id) { return str_replace("<id>", $id, $this->lista_OnClickBotaoExcluir);}
+	
+	public function getActionBotaoExcluir() { return "?l={$this->tabela}";}
+	public function getOnClickBotaoNovo() { return "window.location='?l={$this->tabela}&sl=novo'"; }
+	
+	public function getButtons($id = false) { return null; } // botoes lista
+	public function getButtons_topo() { return null; } // botoes topo
+	
+	
+	///// editar
+	public function getActionFormEditar() { return "?l={$this->tabela}"; }
+	public function getLabelBotaoFormEditar() { return "Editar"; }
+	public function getOnClickVoltarEditar() { return "window.location='?l={$this->tabela}'"; }
+	public function getOnClickCancelarEditar() { return "window.location='?l={$this->tabela}'"; }
+	
+	public function editar_hasBotaoVoltar() { return true; }
+	public function editar_hasBotaoCancelar() { return true; }
+	
+	///// novo
+	public function getActionFormNovo() { return "?l={$this->tabela}"; }
+	public function getLabelBotaoFormNovo() { return "Cadastrar"; }
+	public function getOnClickVoltarNovo() { return "window.location='?l={$this->tabela}'"; }
+	public function getOnClickCancelarNovo() { return "window.location='?l={$this->tabela}'"; }
+	
+	public function novo_hasBotaoVoltar() { return true; }
+	public function novo_hasBotaoCancelar() { return true; }
+	
+	/////////////////////////////////////////////////////// fim forms dinamicos
+	
+}
+	
+?>
+

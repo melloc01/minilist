@@ -1,0 +1,172 @@
+							$array_final['artigos'][]  = $artigo; 
+							$array_final['rejeitados'][] = $artigo; 
+							$array_final['valores'][]  = $artigo_tratado; 
+							$array_final['valores_rejeitados'][] = $artigo_tratado;							 
+							<input type="hidden" name="currency" value="BRL" /> 
+							<input type="hidden" name="receiverEmail" value="ti.rcampanari@gmail.com" /> 
+							<input type="image" src="https://p.simg.uol.com.br/out/pagseguro/i/botoes/doacoes/99x61-doar-azul-assina.gif" name="submit" alt="Pague com PagSeguro - é rápido, grátis e seguro!" /> 
+						$numero_linhas_vazias 
+						$string_final .= "$artigo_final \r\n";   
+						$string_final_rejeitados .= "$artigo_final \r\n";   
+						</form> 
+						<form action="https://pagseguro.uol.com.br/checkout/v2/donation.html" method="post"> 
+						Filtrados = <?php echo sizeof($array_final['valores']) ?> 
+						Linhas vazias = <?php echo $numero_linhas_vazias ?> 
+						Todos = <?php echo sizeof($array_artigos) - $numero_linhas_vazias ?> 
+						if (!in_array($artigo_tratado, $array_final['valores'])) { 
+						} else { 
+					$caminho_saida = "./artigos_tratados/saida_{$nome}";  
+					$caminho_saida_rejeitados = "./artigos_tratados/saida_rejeitados_{$nome}";  
+					$saida_echo  =  '<kbd>'.nl2br($string_final).'</kbd>'; 
+					$saida_echo_rejeitados  =  '<kbd>'.nl2br($string_final_rejeitados).'</kbd>'; 
+					$string_final = ""; 
+					$string_final_rejeitados = ""; 
+					// $artigo_tratado = preg_replace("/&([a-z])[a-z] 
+					<h1 style="color : green;"> 
+					<h2> 
+					<p style="color : #888;"> 
+					<td> 
+					<td><small>Esse programa foi útil pra você?</small></td> 
+					asort($array_final['artigos']); 
+					echo $saida_echo; 
+					echo '<p style= "color: coral;">'.$saida_echo_rejeitados.'</p>'; 
+					file_put_contents($caminho_saida, $string_final); 
+					file_put_contents($caminho_saida_rejeitados, $string_final_rejeitados); 
+					foreach ($array_final['artigos'] as $key => $artigo_final) { 
+					foreach ($array_final['rejeitados'] as $key => $artigo_final) { 
+					if ($artigo_tratado != null) { 
+				$artigo_tratado =  slug($artigo_tratado); 
+				$artigo_tratado = str_replace(' ', '', strtolower($artigo)) ; 
+				$artigo_tratado = str_replace('.', '', $artigo_tratado) ; 
+				// $string_tratada =  filter_var($string_tratada, FILTER_SANITIZE_STRING); 
+				// $string_tratada =  nl2br($STRING_arquivo); 
+				<div style="border: 1px solid gray; padding:15px; text-align:left;"> 
+				<h2><a href='download.php?arquivo=<?php echo $caminho_saida?>'>Download da lista Filtrada</a></h2> 
+				<h4><a href="download.php?arquivo=<?php echo $caminho_saida_rejeitados?>">Download da lista de Rejeitados ( removidos da lista )</a></h4> 
+				<li>Abra o arquivo no Word.</li> 
+				<li>Abra o bloco de notas e copie todo o conte&uacute;do copiado do Word.</li> 
+				<li>Copie todo o conte&uacute;do do arquivo ( control  
+				<li>Salve o arquivo ( Control  
+				<tr> 
+			$STRING_arquivo = file_get_contents($path.$nome); 
+			$array_artigos = explode(' 
+			$array_final = array(); 
+			$array_final['artigos'] = array(); 
+			$array_final['rejeitados'] = array(); 
+			$array_final['valores'] = array(); 
+			$array_final['valores_rejeitados'] = array(); 
+			$i=0; 
+			$nome = md5(date('h:i:s')).'.txt'; 
+			$numero_linhas_vazias = 0; 
+			$path= './uploads/'; 
+			$string_tratada = preg_replace("/\r\n|\r|\n/",' 
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o), 
+			<h2>Escolher arquivo</h2> 
+			<input type="file" name="arquivo" > 
+			<tbody> 
+			<ul> 
+			Esse programa trata seus arquivos de texto tirando toda linha <b>repetida</b> que encontrar nele. É utilizado como filtro de artigos repetidos intra e inter-base de <b>Revisão Sistemática</b>.  
+			chmod($path.$nome, 0777); 
+			color:#333; 
+			font-family : verdana,sans-serif;		 
+			foreach ($array_artigos as $key => $artigo) { 
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m) 
+			move_uploaded_file($FILE['tmp_name'], $path.$nome); 
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){ 
+		</label> 
+		</table> 
+		<br> 
+		<h3 id = 'msg'></h3> 
+		<h4> Aten&ccedil;&atilde;o, os arquivos fornecidos devem ter a extens&atilde;o <b>.txt</b> </h4>  
+		<h4> O que faz? </h4>  
+		<input type="hidden" name="flag"> 
+		<input type="submit" onclick="document.getElementById('msg').innerHTML = 'Enviando arquivo...';" value="Enviar Arquivo" style='margin: 0 auto; padding: 20px 50px; margin-bottom:50px;'> 
+		<label   style="display:table; margin:0 auto; border:1px solid #999; background:#eee; padding:20px; text-align:center;"> 
+		<p>  
+		<p> Como fazer para passar de .doc para .txt ? 
+		<table style="float:right;"> 
+		Minilist 
+		body{ 
+		chr(0x80) => '&euro;', 
+		chr(0x82) => '&sbquo;', 
+		chr(0x84) => '&bdquo;', 
+		chr(0x85) => '&hellip;', 
+		chr(0x86) => '&dagger;', 
+		chr(0x87) => '&Dagger;', 
+		chr(0x89) => '&permil;', 
+		chr(0x8A) => chr(0xA9), 
+		chr(0x8B) => '&lsaquo;', 
+		chr(0x8C) => chr(0xA6), 
+		chr(0x8D) => chr(0xAB), 
+		chr(0x8E) => chr(0xAE), 
+		chr(0x8F) => chr(0xAC), 
+		chr(0x91) => '&lsquo;', 
+		chr(0x92) => '&rsquo;', 
+		chr(0x93) => '&ldquo;', 
+		chr(0x94) => '&rdquo;', 
+		chr(0x95) => '&bull;', 
+		chr(0x96) => '&ndash;', 
+		chr(0x97) => '&mdash;', 
+		chr(0x99) => '&trade;', 
+		chr(0x9A) => chr(0xB9), 
+		chr(0x9B) => '&rsquo;', 
+		chr(0x9C) => chr(0xB6), 
+		chr(0x9D) => chr(0xBB), 
+		chr(0x9E) => chr(0xBE), 
+		chr(0x9F) => chr(0xBC), 
+		chr(0xA1) => chr(0xB7), 
+		chr(0xA5) => chr(0xA1), 
+		chr(0xA6) => '&brvbar;', 
+		chr(0xA9) => '&copy;', 
+		chr(0xAB) => '&laquo;', 
+		chr(0xAE) => '&reg;', 
+		chr(0xB1) => '&plusmn;', 
+		chr(0xB5) => '&micro;', 
+		chr(0xB6) => '&para;', 
+		chr(0xB7) => '&middot;', 
+		chr(0xB9) => chr(0xB1), 
+		chr(0xBB) => '&raquo;', 
+		chr(0xBC) => chr(0xA5), 
+		chr(0xBE) => chr(0xB5), 
+		foreach ($_FILES as $key => $FILE) { 
+		ga('create', 'UA-51590544-1', 'mustacheweb.com.br'); 
+		ga('require', 'displayfeatures'); 
+		ga('send', 'pageview'); 
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga'); 
+	$map = array( 
+	$z = preg_replace('/[^a-z0-9 -] 
+	$z = str_replace(' ', '-', $z); 
+	$z = strtolower($z); 
+	</div> 
+	</h1> 
+	</style> 
+	<?php if (isset($_POST['flag'])){ 
+	<div style="display:table; width:100%; text-align:right;"> 
+	<div style='border: 1px solid #bce8f1;  padding: 50px; text-align:left; color:#31708f; background:#d9edf7; display:table; width:60%; margin: 25px auto;'>  
+	<div style='border: 1px solid orange;  padding: 50px; text-align:left; color:#755C29; background:#FFDB73; display:table; width:60%; margin: 25px auto;'>  
+	<form method="post" action="./" enctype='multipart/form-data'> 
+	<h1 style='margin-top:50px;'> 
+	<meta charset=utf8> 
+	<script> 
+	<style type='text/css'> 
+	<title>Minilist - Tratamento de Listas</title> 
+	return trim($z, '-'); 
+    // http://konfiguracja.c0.pl/iso02vscp1250en.html 
+    // http://konfiguracja.c0.pl/webpl/index_en.html#examp 
+    // http://www.htmlentities.com/html/entities/ 
+    // map based on: 
+ A , control  
+ C ) </li> 
+ S )</li> 
+', $string_tratada); 
+',$STRING_arquivo); 
+/', '', $z); 
+;/i", "$1", htmlentities($artigo_tratado)); 
+<!DOCTYPE html> 
+<?php   
+<body style="text-align:center;"> 
+<head> 
+<html> 
+function slug($z){ 
+function w1250_to_utf8($text) { 
+return html_entity_decode(mb_convert_encoding(strtr($text, $map), 'UTF-8', 'ISO-8859-2'), ENT_QUOTES, 'UTF-8'); 
